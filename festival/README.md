@@ -1,12 +1,56 @@
-# React + Vite
+# Festival - Ứng dụng Web React
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Ứng dụng web Festival được xây dựng bằng React và Vite, có chức năng quản lý cho cả admin và người dùng.
 
-Currently, two official plugins are available:
+## 📋 Yêu cầu hệ thống
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Trước khi bắt đầu, hãy đảm bảo máy tính của bạn đã cài đặt:
 
-## Expanding the ESLint configuration
+- **Node.js** (phiên bản 16.0 trở lên) - [Tải về tại đây](https://nodejs.org/)
+- **npm** (thường đi kèm với Node.js) hoặc **yarn**
+- **Git** - [Tải về tại đây](https://git-scm.com/)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🚀 Cài đặt và chạy dự án
+
+### 1. Clone dự án
+
+```bash
+git clone https://github.com/Nhanchinh/project_Ngan
+cd festival
+```
+
+### 2. Cài đặt dependencies
+
+Sử dụng npm:
+```bash
+npm install
+```
+
+Hoặc sử dụng yarn:
+```bash
+yarn install
+```
+
+### 3. Chạy ứng dụng ở môi trường development
+
+```bash
+npm run dev
+```
+
+Hoặc:
+```bash
+yarn dev
+```
+
+Ứng dụng sẽ chạy tại địa chỉ: `http://localhost:5173`
+
+## 📦 Các lệnh có sẵn
+
+| Lệnh | Mô tả |
+|------|-------|
+| `npm run dev` | Chạy ứng dụng ở môi trường development |
+| `npm run build` | Build ứng dụng cho production |
+| `npm run preview` | Xem trước bản build |
+| `npm run lint` | Kiểm tra lỗi code với ESLint |
+
+## 🏗️ Cấu trúc dự án
