@@ -130,6 +130,16 @@ const ImageGallery = ({ images, title }) => {
     );
 };
 
+// Thêm helper function để format date an toàn
+const formatCommentDate = (dateString) => {
+    if (!dateString) return 'Vừa xong';
+
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Vừa xong';
+
+    return date.toLocaleDateString('vi-VN');
+};
+
 const ArticleDetail = ({ articles, incrementViews }) => {
     const { id } = useParams();
     const [article, setArticle] = useState(null);
@@ -179,10 +189,10 @@ const ArticleDetail = ({ articles, incrementViews }) => {
             if (response && response.comments) {
                 const processedComments = response.comments.map(comment => ({
                     id: comment.id,
-                    author: comment.author?.username || 'Khách',
+                    author: comment.author?.username || comment.author || 'Khách',
                     content: comment.body,
                     rating: comment.rate || 5,
-                    date: comment.createdAt,
+                    date: comment.createdAt || new Date().toISOString(), // 👈 Fallback nếu null
                     email: comment.author?.email || ''
                 }));
                 setComments(processedComments);
@@ -217,7 +227,7 @@ const ArticleDetail = ({ articles, incrementViews }) => {
                     author: newComment.name.trim(),
                     content: response.comment.body,
                     rating: response.comment.rate || newComment.rating,
-                    date: response.comment.createdAt,
+                    date: response.comment.createdAt || new Date().toISOString(), // 👈 Fallback nếu null
                     email: newComment.email
                 };
 
@@ -299,7 +309,7 @@ const ArticleDetail = ({ articles, incrementViews }) => {
                                 <span>👁️ {article.views.toLocaleString('vi-VN')} lượt xem</span>
                             </div>
                             <div className="article-detail-meta-item">
-                                <span>📍 {article.location}</span>
+                                <span>🗺️ {article.location}</span>
                             </div>
                         </div>
 
@@ -435,7 +445,7 @@ const ArticleDetail = ({ articles, incrementViews }) => {
                                                     </div>
                                                 </div>
                                                 <span className="article-detail-comment-date">
-                                                    {new Date(comment.date).toLocaleDateString('vi-VN')}
+                                                    {formatCommentDate(comment.date)}
                                                 </span>
                                             </div>
                                             <div className="article-detail-comment-content">

@@ -546,7 +546,7 @@ const AdminArticles = ({ articles, onAdd, onUpdate, onDelete }) => {
                                         name="description"
                                         value={formData.description}
                                         onChange={handleInputChange}
-                                        placeholder="Nhập mô tả ngắn về lễ hội..."
+                                        placeholder="Nhập mô tả ngắn thời gian diễn ra lễ hội (VD Ngày: 01/04/2025 - 17/04/2025)"
                                         rows="3"
                                         required
                                         disabled={isLoading}

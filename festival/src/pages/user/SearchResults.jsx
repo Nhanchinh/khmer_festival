@@ -30,7 +30,6 @@ const SearchResults = ({ articles, searchTerm }) => {
                     article.title.toLowerCase().includes(searchText) ||
                     article.excerpt.toLowerCase().includes(searchText) ||
                     article.content.toLowerCase().includes(searchText) ||
-                    article.category.toLowerCase().includes(searchText) ||
                     article.location.toLowerCase().includes(searchText) ||
                     article.tags.some(tag => tag.toLowerCase().includes(searchText))
                 );
@@ -93,10 +92,9 @@ const SearchResults = ({ articles, searchTerm }) => {
                                     <div className="search-results-info">
                                         <div className="search-results-article-header">
                                             <h3 className="search-results-article-title">{article.title}</h3>
-                                            <span className="search-results-category">{article.category}</span>
                                         </div>
 
-                                        <p className="search-results-location">📍 {article.location}</p>
+                                        <p className="search-results-location">🗺️ {article.location}</p>
                                         <p className="search-results-excerpt">{article.excerpt}</p>
 
                                         {/* Highlight matching tags */}

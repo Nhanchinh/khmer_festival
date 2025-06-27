@@ -316,7 +316,6 @@ export const convertApiArticleToFrontend = (apiArticle) => {
         videoUrl: apiArticle.videoUrl,
         location: apiArticle.mapLocation || 'Chưa xác định',
         date: apiArticle.createdAt || new Date().toISOString(),
-        category: 'festival',
         tags: apiArticle.tagList || [],
         featured: false,
         views: 0,
