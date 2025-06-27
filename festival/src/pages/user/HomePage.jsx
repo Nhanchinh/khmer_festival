@@ -264,6 +264,18 @@ const HomePage = ({ articles }) => {
                                                     </span>
                                                 )}
                                             </div>
+
+                                            {/* ✅ THÊM Google Maps link */}
+                                            <div className="homepage-location-actions">
+                                                <a
+                                                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location.name + ' Vietnam')}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="homepage-location-map-link"
+                                                >
+                                                    🗺️ Xem bản đồ
+                                                </a>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>

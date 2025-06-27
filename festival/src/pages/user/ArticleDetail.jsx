@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { commentsAPI, authAPI } from '../../utils/api';
 import './ArticleDetail.css';
+import GoogleMap from '../../components/GoogleMap';
 
 // Image Gallery Component
 const ImageGallery = ({ images, title }) => {
@@ -331,6 +332,9 @@ const ArticleDetail = ({ articles, incrementViews }) => {
                             paragraph.trim() && <p key={index}>{paragraph}</p>
                         ))}
                     </div>
+
+                    {/* ✅ THÊM Google Map */}
+                    <GoogleMap location={article.location} title={article.title} />
 
                     {/* Comments Section */}
                     <section className="article-detail-comments">
