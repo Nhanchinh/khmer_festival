@@ -1,13 +1,14 @@
 import React from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 
-const AdminLayout = () => {
+const AdminLayout = ({ onLogout }) => {
     const navigate = useNavigate();
 
     const handleLogout = () => {
-        localStorage.removeItem('adminAuth');
+        if (onLogout) {
+            onLogout();
+        }
         navigate('/admin/login');
-        window.location.reload();
     };
 
     return (

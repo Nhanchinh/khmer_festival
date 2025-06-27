@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { authAPI } from '../../utils/api';
 
 const AdminLogin = ({ setIsAdminAuthenticated, isAuthenticated }) => {
-    const [credentials, setCredentials] = useState({ username: '', password: '' });
+    const [credentials, setCredentials] = useState({ email: '', password: '' });
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
@@ -14,22 +15,41 @@ const AdminLogin = ({ setIsAdminAuthenticated, isAuthenticated }) => {
         }
     }, [isAuthenticated, navigate]);
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
         setIsLoading(true);
         setError('');
 
-        // Simple authentication (in real app, this would be API call)
-        setTimeout(() => {
-            if (credentials.username === 'admin' && credentials.password === 'khmer2024') {
+        try {
+            console.log('Starting login process...');
+
+            // Validate input
+            if (!credentials.email.trim()) {
+                throw new Error('Vui lòng nhập email');
+            }
+            if (!credentials.password.trim()) {
+                throw new Error('Vui lòng nhập mật khẩu');
+            }
+
+            // Call API login
+            const response = await authAPI.login(credentials.email.trim(), credentials.password);
+
+            if (response.user) {
+                console.log('Login successful:', response.user);
+
+                // Set admin authentication
                 localStorage.setItem('adminAuth', 'true');
                 setIsAdminAuthenticated(true);
                 navigate('/admin');
             } else {
-                setError('Tên đăng nhập hoặc mật khẩu không chính xác');
+                throw new Error('Phản hồi từ server không hợp lệ');
             }
+        } catch (error) {
+            console.error('Login error:', error);
+            setError(error.message || 'Đăng nhập thất bại');
+        } finally {
             setIsLoading(false);
-        }, 1000);
+        }
     };
 
     return (
@@ -46,14 +66,15 @@ const AdminLogin = ({ setIsAdminAuthenticated, isAuthenticated }) => {
                     {/* Form */}
                     <form onSubmit={handleLogin} className="login-form">
                         <div className="form-group">
-                            <label>Tên đăng nhập</label>
+                            <label>Email</label>
                             <input
-                                type="text"
-                                value={credentials.username}
-                                onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
-                                placeholder="Nhập username..."
+                                type="email"
+                                value={credentials.email}
+                                onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
+                                placeholder="Nhập email..."
                                 required
-                                autoComplete="username"
+                                autoComplete="email"
+                                disabled={isLoading}
                             />
                         </div>
 
@@ -66,6 +87,7 @@ const AdminLogin = ({ setIsAdminAuthenticated, isAuthenticated }) => {
                                 placeholder="Nhập password..."
                                 required
                                 autoComplete="current-password"
+                                disabled={isLoading}
                             />
                         </div>
 
@@ -98,9 +120,10 @@ const AdminLogin = ({ setIsAdminAuthenticated, isAuthenticated }) => {
                     <div className="demo-info">
                         <h4>🔑 Thông tin demo</h4>
                         <div className="demo-credentials">
-                            <p><strong>Username:</strong> <code>admin</code></p>
-                            <p><strong>Password:</strong> <code>khmer2024</code></p>
+                            <p><strong>Email:</strong> <code>admin@festival.com</code></p>
+                            <p><strong>Password:</strong> <code>123456</code></p>
                         </div>
+                        <small>Sử dụng thông tin này để đăng nhập vào hệ thống</small>
                     </div>
 
                     {/* Back Link */}
