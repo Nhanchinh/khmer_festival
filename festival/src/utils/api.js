@@ -260,6 +260,22 @@ export const articlesAPI = {
         });
 
         console.log('✅ Article deleted successfully');
+    },
+
+    // ✅ API tăng view - ĐƠN GIẢN VÀ RÕ RÀNG
+    incrementView: async (slug) => {
+        console.log('👁️ [API] POST /articles/' + slug + '/view');
+
+        try {
+            const response = await apiCall(`/articles/${slug}/view`, {
+                method: 'POST',
+            });
+            console.log('✅ [API] View incremented successfully');
+            return response;
+        } catch (error) {
+            console.error('❌ [API] Failed to increment view:', error.message);
+            throw error;
+        }
     }
 };
 
@@ -317,8 +333,15 @@ export const convertApiArticleToFrontend = (apiArticle) => {
         location: apiArticle.mapLocation || 'Chưa xác định',
         date: apiArticle.createdAt || new Date().toISOString(),
         tags: apiArticle.tagList || [],
-        featured: false,
-        views: 0,
+        featured: apiArticle.favorited || false,
+        views: apiArticle.views || 0,
+        favoritesCount: apiArticle.favoritesCount || 0,
+        author: apiArticle.author ? {
+            username: apiArticle.author.username,
+            email: apiArticle.author.email,
+            bio: apiArticle.author.bio,
+            image: apiArticle.author.image
+        } : null,
         comments: apiArticle.comments ? apiArticle.comments.map(comment => ({
             id: comment.id || comment.commentId,
             name: comment.author || 'Anonymous',

@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { commentsAPI, authAPI } from '../../utils/api';
+import { commentsAPI, authAPI, articlesAPI } from '../../utils/api';
 import './ArticleDetail.css';
 import GoogleMap from '../../components/GoogleMap';
 
@@ -156,17 +156,69 @@ const ArticleDetail = ({ articles, incrementViews }) => {
     });
     const [isSubmittingComment, setIsSubmittingComment] = useState(false);
     const viewCountedRef = useRef(new Set());
+    const currentViewsRef = useRef(null);
+
+    const handleIncrementView = useCallback(async (articleSlug, articleId) => {
+        const trackingKey = articleSlug || articleId;
+
+        if (!trackingKey || viewCountedRef.current.has(trackingKey)) {
+            console.log('👁️ View already counted for:', trackingKey);
+            return;
+        }
+
+        console.log('👁️ Incrementing view for:', trackingKey);
+        viewCountedRef.current.add(trackingKey);
+
+        try {
+            const currentViews = article?.views || 0;
+            currentViewsRef.current = currentViews + 1;
+
+            setArticle(prev => prev ? {
+                ...prev,
+                views: currentViews + 1
+            } : null);
+
+            await articlesAPI.incrementView(articleSlug || articleId);
+            console.log('✅ Backend view incremented successfully');
+
+        } catch (error) {
+            console.error('❌ Failed to increment view:', error);
+            setArticle(prev => prev ? {
+                ...prev,
+                views: currentViews
+            } : null);
+            viewCountedRef.current.delete(trackingKey);
+            currentViewsRef.current = null;
+        }
+    }, [article?.views]);
 
     useEffect(() => {
-        let foundArticle = null;
+        console.log('📄 ArticleDetail useEffect - ID:', id, 'Articles length:', articles?.length);
 
-        foundArticle = articles.find(a => a.id === id) ||
+        if (!articles || articles.length === 0) {
+            console.log('⏳ Articles not loaded yet, waiting...');
+            return;
+        }
+
+        const foundArticle = articles.find(a => a.id === id) ||
             articles.find(a => a.id === parseInt(id)) ||
             articles.find(a => a.slug === id) ||
             articles.find(a => String(a.id) === String(id));
 
         if (foundArticle) {
-            setArticle(foundArticle);
+            console.log('✅ Found article:', foundArticle.title, 'Views:', foundArticle.views);
+
+            setArticle(prev => {
+                if (!prev) {
+                    return foundArticle;
+                }
+
+                const newViews = Math.max(foundArticle.views, currentViewsRef.current || 0, prev.views || 0);
+                return {
+                    ...foundArticle,
+                    views: newViews
+                };
+            });
 
             if (foundArticle.comments && foundArticle.comments.length > 0) {
                 setComments(foundArticle.comments);
@@ -174,12 +226,26 @@ const ArticleDetail = ({ articles, incrementViews }) => {
                 loadCommentsFromAPI(foundArticle.slug || foundArticle.id);
             }
 
-            if (incrementViews && !viewCountedRef.current.has(foundArticle.id)) {
-                incrementViews(foundArticle.id);
-                viewCountedRef.current.add(foundArticle.id);
+            const slugToUse = foundArticle.slug || foundArticle.id;
+            if (slugToUse) {
+                handleIncrementView(slugToUse, foundArticle.id);
             }
+
+            if (incrementViews && !viewCountedRef.current.has('local_' + foundArticle.id)) {
+                incrementViews(foundArticle.id);
+                viewCountedRef.current.add('local_' + foundArticle.id);
+            }
+        } else {
+            console.log('❌ Article not found with ID:', id);
+            setArticle(null);
         }
-    }, [id, articles, incrementViews]);
+    }, [id, articles, handleIncrementView, incrementViews]);
+
+    useEffect(() => {
+        return () => {
+            console.log('🧹 Cleaning up ArticleDetail');
+        };
+    }, []);
 
     const loadCommentsFromAPI = async (slug) => {
         if (!slug) return;
@@ -193,7 +259,7 @@ const ArticleDetail = ({ articles, incrementViews }) => {
                     author: comment.author?.username || comment.author || 'Khách',
                     content: comment.body,
                     rating: comment.rate || 5,
-                    date: comment.createdAt || new Date().toISOString(), // 👈 Fallback nếu null
+                    date: comment.createdAt || new Date().toISOString(),
                     email: comment.author?.email || ''
                 }));
                 setComments(processedComments);
@@ -228,7 +294,7 @@ const ArticleDetail = ({ articles, incrementViews }) => {
                     author: newComment.name.trim(),
                     content: response.comment.body,
                     rating: response.comment.rate || newComment.rating,
-                    date: response.comment.createdAt || new Date().toISOString(), // 👈 Fallback nếu null
+                    date: response.comment.createdAt || new Date().toISOString(),
                     email: newComment.email
                 };
 
@@ -260,15 +326,17 @@ const ArticleDetail = ({ articles, incrementViews }) => {
         setCurrentPage(pageNumber);
     };
 
-    if (!article) {
+    if (!article && articles && articles.length > 0) {
         return (
             <div className="article-detail-container">
                 <div className="article-detail-main">
                     <div className="article-detail-card">
                         <div style={{ padding: '2rem', textAlign: 'center' }}>
-                            <h2>Không tìm thấy bài viết</h2>
-                            <p>Bài viết bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.</p>
-                            <Link to="/" style={{ color: '#667eea', textDecoration: 'none' }}>← Quay về trang chủ</Link>
+                            <h2>😕 Không tìm thấy bài viết</h2>
+                            <p>Bài viết với ID <strong>{id}</strong> không tồn tại hoặc đã bị xóa.</p>
+                            <Link to="/" style={{ color: '#667eea', textDecoration: 'none' }}>
+                                🏠 Quay về trang chủ
+                            </Link>
                         </div>
                     </div>
                 </div>
@@ -276,12 +344,25 @@ const ArticleDetail = ({ articles, incrementViews }) => {
         );
     }
 
-    // Calculate average rating
+    if (!article) {
+        return (
+            <div className="article-detail-container">
+                <div className="article-detail-main">
+                    <div className="article-detail-card">
+                        <div style={{ padding: '2rem', textAlign: 'center' }}>
+                            <div className="loading-spinner"></div>
+                            <p>Đang tải bài viết...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     const averageRating = comments.length > 0
         ? comments.reduce((sum, comment) => sum + (Number(comment.rating) || 5), 0) / comments.length
         : 0;
 
-    // Pagination
     const indexOfLastComment = currentPage * commentsPerPage;
     const indexOfFirstComment = indexOfLastComment - commentsPerPage;
     const currentComments = comments.slice(indexOfFirstComment, indexOfLastComment);
@@ -291,26 +372,27 @@ const ArticleDetail = ({ articles, incrementViews }) => {
         <div className="article-detail-container">
             <div className="article-detail-main">
                 <article className="article-detail-card">
-                    {/* Breadcrumb */}
                     <div className="article-detail-breadcrumb">
                         <Link to="/">Trang chủ</Link>
                         <span className="article-detail-separator">/</span>
                         <span className="article-detail-current">{article.title}</span>
                     </div>
 
-                    {/* Article Header */}
                     <header className="article-detail-header">
                         <h1 className="article-detail-title">{article.title}</h1>
 
                         <div className="article-detail-meta">
                             <div className="article-detail-meta-item">
-                                <span>📅 {new Date(article.date).toLocaleDateString('vi-VN')}</span>
+                                <span className="meta-icon">📅</span>
+                                <span>{new Date(article.date).toLocaleDateString('vi-VN')}</span>
                             </div>
                             <div className="article-detail-meta-item">
-                                <span>👁️ {article.views.toLocaleString('vi-VN')} lượt xem</span>
+                                <span className="meta-icon">👁️</span>
+                                <span>{(article.views || 0).toLocaleString('vi-VN')} lượt xem</span>
                             </div>
                             <div className="article-detail-meta-item">
-                                <span>🗺️ {article.location}</span>
+                                <span className="meta-icon">🗺️</span>
+                                <span>{article.location}</span>
                             </div>
                         </div>
 
@@ -323,20 +405,16 @@ const ArticleDetail = ({ articles, incrementViews }) => {
                         )}
                     </header>
 
-                    {/* Article Image/Gallery */}
                     <ImageGallery images={article.image} title={article.title} />
 
-                    {/* Article Content */}
                     <div className="article-detail-content">
                         {article.content.split('\n').map((paragraph, index) => (
                             paragraph.trim() && <p key={index}>{paragraph}</p>
                         ))}
                     </div>
 
-                    {/* ✅ THÊM Google Map */}
                     <GoogleMap location={article.location} title={article.title} />
 
-                    {/* Comments Section */}
                     <section className="article-detail-comments">
                         <div className="article-detail-comments-header">
                             <h2 className="article-detail-comments-title">💬 Bình luận ({comments.length})</h2>
@@ -363,7 +441,6 @@ const ArticleDetail = ({ articles, incrementViews }) => {
                             )}
                         </div>
 
-                        {/* Comment Form */}
                         <form onSubmit={handleCommentSubmit} className="article-detail-comment-form">
                             <h3>Để lại bình luận của bạn</h3>
 
@@ -420,7 +497,6 @@ const ArticleDetail = ({ articles, incrementViews }) => {
                             </button>
                         </form>
 
-                        {/* Comments List */}
                         {isLoadingComments ? (
                             <div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
                                 Đang tải bình luận...
@@ -459,7 +535,6 @@ const ArticleDetail = ({ articles, incrementViews }) => {
                                     ))}
                                 </div>
 
-                                {/* Pagination */}
                                 {totalPages > 1 && (
                                     <div className="article-detail-pagination">
                                         <button
