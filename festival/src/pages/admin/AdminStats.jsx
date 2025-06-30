@@ -86,11 +86,7 @@ const AdminStats = ({ articles }) => {
                     <div className="stat-label">Trung bình lượt xem/bài</div>
                 </div>
 
-                <div className="stat-card card">
-                    <div className="stat-icon" style={{ fontSize: '3em', marginBottom: '0.5rem' }}>⭐</div>
-                    <div className="stat-number">{featuredCount}</div>
-                    <div className="stat-label">Bài viết nổi bật</div>
-                </div>
+
             </div>
 
             <div className="grid grid-2">

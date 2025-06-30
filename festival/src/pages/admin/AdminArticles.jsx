@@ -154,13 +154,14 @@ const AdminArticles = ({ articles, onAdd, onUpdate, onDelete }) => {
 
     const [formData, setFormData] = useState({
         title: '',
-        description: '',
         content: '',
         images: [],
         videoUrl: '',
         location: '',
         tags: '',
-        featured: false
+        featured: false,
+        startDate: '',
+        endDate: ''
     });
 
     const [sortBy, setSortBy] = useState('date');
@@ -198,26 +199,31 @@ const AdminArticles = ({ articles, onAdd, onUpdate, onDelete }) => {
     // Reset form when editing changes
     useEffect(() => {
         if (editingArticle) {
+            const descriptionText = editingArticle.excerpt || editingArticle.description || '';
+            const existingDates = parseExistingDates(descriptionText);
+
             setFormData({
                 title: editingArticle.title || '',
-                description: editingArticle.excerpt || '',
                 content: editingArticle.content || '',
                 images: Array.isArray(editingArticle.image) ? editingArticle.image : [editingArticle.image] || [],
                 videoUrl: editingArticle.videoUrl || '',
                 location: editingArticle.location || '',
                 tags: Array.isArray(editingArticle.tags) ? editingArticle.tags.join(', ') : '',
-                featured: editingArticle.featured || false
+                featured: editingArticle.featured || false,
+                startDate: existingDates.startDate,
+                endDate: existingDates.endDate
             });
         } else {
             setFormData({
                 title: '',
-                description: '',
                 content: '',
                 images: [],
                 videoUrl: '',
                 location: '',
                 tags: '',
-                featured: false
+                featured: false,
+                startDate: '',
+                endDate: ''
             });
         }
     }, [editingArticle]);
@@ -244,6 +250,9 @@ const AdminArticles = ({ articles, onAdd, onUpdate, onDelete }) => {
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
+
+        console.log('🔍 Input change:', { name, value }); // Debug
+
         setFormData(prev => ({
             ...prev,
             [name]: type === 'checkbox' ? checked : value
@@ -262,7 +271,17 @@ const AdminArticles = ({ articles, onAdd, onUpdate, onDelete }) => {
         e.preventDefault();
         if (isLoading) return;
 
-        // ✅ THÊM: Double check authentication
+        // ✅ Validation đơn giản
+        if (!formData.startDate || !formData.endDate) {
+            alert('Vui lòng chọn ngày bắt đầu và ngày kết thúc');
+            return;
+        }
+
+        if (new Date(formData.startDate) > new Date(formData.endDate)) {
+            alert('Ngày bắt đầu không thể sau ngày kết thúc');
+            return;
+        }
+
         const currentUser = authAPI.getCurrentUser();
         if (!currentUser) {
             alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!');
@@ -273,12 +292,26 @@ const AdminArticles = ({ articles, onAdd, onUpdate, onDelete }) => {
         setError('');
 
         try {
-            // ✅ SỬA: Đúng format data gửi lên API
+            // ✅ AUTO GENERATE description từ date picker
+            const startDate = new Date(formData.startDate);
+            const endDate = new Date(formData.endDate);
+
+            const formatDate = (date) => {
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                return `${day}/${month}/${year}`;
+            };
+
+            const autoDescription = startDate.getTime() === endDate.getTime()
+                ? `Ngày: ${formatDate(startDate)}`
+                : `Ngày: ${formatDate(startDate)} - ${formatDate(endDate)}`;
+
             const articleData = {
                 title: formData.title.trim(),
-                description: formData.description.trim(),
+                description: autoDescription, // ✅ Tự động từ date picker
                 body: formData.content.trim(),
-                image: formData.images, // 👈 Array of image URLs
+                image: formData.images,
                 videoUrl: formData.videoUrl.trim() || undefined,
                 mapLocation: formData.location.trim() || undefined,
                 tagList: formData.tags.trim() ?
@@ -286,7 +319,7 @@ const AdminArticles = ({ articles, onAdd, onUpdate, onDelete }) => {
                     []
             };
 
-            console.log('🔍 Final article data being sent:', articleData);
+            console.log('🔍 Final article data:', articleData);
 
             if (editingArticle) {
                 await onUpdate(editingArticle.slug || editingArticle.id, articleData);
@@ -304,30 +337,88 @@ const AdminArticles = ({ articles, onAdd, onUpdate, onDelete }) => {
         }
     };
 
+    // ✅ Parse ngày từ description ẩn để điền date picker
+    const parseExistingDates = (description) => {
+        console.log('🔍 Parsing hidden description for dates:', description);
+
+        if (!description) return { startDate: '', endDate: '' };
+
+        const datePattern = /Ngày:\s*(\d{1,2}\/\d{1,2}\/\d{4})\s*-\s*(\d{1,2}\/\d{1,2}\/\d{4})/;
+        const singleDatePattern = /Ngày:\s*(\d{1,2}\/\d{1,2}\/\d{4})/;
+
+        const dateMatch = description.match(datePattern);
+        if (dateMatch) {
+            console.log('✅ Found date range:', dateMatch[1], '-', dateMatch[2]);
+
+            const convertToInputFormat = (dateStr) => {
+                try {
+                    const [day, month, year] = dateStr.split('/');
+                    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                } catch (error) {
+                    console.error('Error converting date:', error);
+                    return '';
+                }
+            };
+
+            return {
+                startDate: convertToInputFormat(dateMatch[1]),
+                endDate: convertToInputFormat(dateMatch[2])
+            };
+        }
+
+        const singleMatch = description.match(singleDatePattern);
+        if (singleMatch) {
+            console.log('✅ Found single date:', singleMatch[1]);
+
+            const convertToInputFormat = (dateStr) => {
+                try {
+                    const [day, month, year] = dateStr.split('/');
+                    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                } catch (error) {
+                    console.error('Error converting date:', error);
+                    return '';
+                }
+            };
+
+            const date = convertToInputFormat(singleMatch[1]);
+            return { startDate: date, endDate: date };
+        }
+
+        console.log('❌ No date pattern found');
+        return { startDate: '', endDate: '' };
+    };
+
     const handleEdit = (article) => {
-        // ✅ THÊM: Kiểm tra authentication
+        console.log('🔍 Editing article:', article);
+
         const currentUser = authAPI.getCurrentUser();
         if (!currentUser) {
             alert('Vui lòng đăng nhập để chỉnh sửa bài viết!');
             return;
         }
 
+        // ✅ Parse ngày từ description ẩn
+        const descriptionText = article.excerpt || article.description || '';
+        const existingDates = parseExistingDates(descriptionText);
+
+        console.log('🔍 Parsed dates for date picker:', existingDates);
+
         setEditingArticle(article);
         setFormData({
             title: article.title || '',
-            description: article.excerpt || '',
             content: article.content || '',
             images: article.image ? (Array.isArray(article.image) ? article.image : [article.image]) : [],
             videoUrl: article.videoUrl || '',
             location: article.location || '',
-            tags: article.tags ? article.tags.join(', ') : '',
-            featured: article.featured || false
+            tags: article.tags ? (Array.isArray(article.tags) ? article.tags.join(', ') : article.tags) : '',
+            featured: article.featured || false,
+            startDate: existingDates.startDate, // ✅ Điền từ description ẩn
+            endDate: existingDates.endDate       // ✅ Điền từ description ẩn
         });
         setShowModal(true);
     };
 
     const handleAdd = () => {
-        // ✅ THÊM: Kiểm tra authentication
         const currentUser = authAPI.getCurrentUser();
         if (!currentUser) {
             alert('Vui lòng đăng nhập để tạo bài viết!');
@@ -337,13 +428,14 @@ const AdminArticles = ({ articles, onAdd, onUpdate, onDelete }) => {
         setEditingArticle(null);
         setFormData({
             title: '',
-            description: '',
             content: '',
             images: [],
             videoUrl: '',
             location: '',
             tags: '',
-            featured: false
+            featured: false,
+            startDate: '',
+            endDate: ''
         });
         setShowModal(true);
     };
@@ -365,13 +457,14 @@ const AdminArticles = ({ articles, onAdd, onUpdate, onDelete }) => {
     const handleCloseModal = () => {
         setFormData({
             title: '',
-            description: '',
             content: '',
             images: [],
             videoUrl: '',
             location: '',
             tags: '',
-            featured: false
+            featured: false,
+            startDate: '',
+            endDate: ''
         });
         setEditingArticle(null);
         setShowModal(false);
@@ -537,21 +630,62 @@ const AdminArticles = ({ articles, onAdd, onUpdate, onDelete }) => {
                                     />
                                 </div>
 
-                                {/* Description */}
-                                <div className="form-group">
-                                    <label>
-                                        Mô tả ngắn <span className="required">*</span>
-                                    </label>
-                                    <textarea
-                                        name="description"
-                                        value={formData.description}
-                                        onChange={handleInputChange}
-                                        placeholder="Nhập mô tả ngắn thời gian diễn ra lễ hội (VD Ngày: 01/04/2025 - 17/04/2025)"
-                                        rows="3"
-                                        required
-                                        disabled={isLoading}
-                                    />
+                                {/* ✅ CHỈ HIỂN THỊ: 2 Date pickers */}
+                                <div className="form-row">
+                                    <div className="form-group">
+                                        <label>
+                                            Ngày bắt đầu <span className="required">*</span>
+                                        </label>
+                                        <input
+                                            type="date"
+                                            name="startDate"
+                                            value={formData.startDate}
+                                            onChange={handleInputChange}
+                                            required
+                                            disabled={isLoading}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>
+                                            Ngày kết thúc <span className="required">*</span>
+                                        </label>
+                                        <input
+                                            type="date"
+                                            name="endDate"
+                                            value={formData.endDate}
+                                            onChange={handleInputChange}
+                                            required
+                                            disabled={isLoading}
+                                        />
+                                    </div>
                                 </div>
+
+                                {/* ✅ THÊM: Preview mô tả sẽ được tạo (optional) */}
+                                {formData.startDate && formData.endDate && (
+                                    <div className="form-group">
+                                        <label>Mô tả về ngày bắt đầu và ngày kết thúc sự kiện:</label>
+                                        <div className="auto-description-preview">
+                                            {(() => {
+                                                const startDate = new Date(formData.startDate);
+                                                const endDate = new Date(formData.endDate);
+
+                                                const formatDate = (date) => {
+                                                    const day = String(date.getDate()).padStart(2, '0');
+                                                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                                                    const year = date.getFullYear();
+                                                    return `${day}/${month}/${year}`;
+                                                };
+
+                                                return startDate.getTime() === endDate.getTime()
+                                                    ? `📅 Ngày: ${formatDate(startDate)}`
+                                                    : `📅 Ngày: ${formatDate(startDate)} - ${formatDate(endDate)}`;
+                                            })()}
+                                        </div>
+                                        <small className="form-hint">
+                                            💡 Mô tả này sẽ tự động được tạo và gửi lên server
+                                        </small>
+                                    </div>
+                                )}
 
                                 {/* Content */}
                                 <div className="form-group">
@@ -606,19 +740,7 @@ const AdminArticles = ({ articles, onAdd, onUpdate, onDelete }) => {
                                 </div>
 
                                 {/* Featured Checkbox */}
-                                <div className="checkbox-field">
-                                    <input
-                                        type="checkbox"
-                                        name="featured"
-                                        checked={formData.featured}
-                                        onChange={handleInputChange}
-                                        disabled={isLoading}
-                                        id="featured-checkbox"
-                                    />
-                                    <label htmlFor="featured-checkbox">
-                                        ⭐ Đánh dấu là lễ hội nổi bật
-                                    </label>
-                                </div>
+
                             </div>
 
                             <div className="modal-actions">

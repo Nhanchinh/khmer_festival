@@ -36,17 +36,9 @@ const AdminDashboard = ({ articles }) => {
                     <div className="stat-label">Tổng lượt xem</div>
                 </div>
 
-                <div className="stat-card">
-                    <div className="stat-icon">⭐</div>
-                    <div className="stat-number">{featuredArticles}</div>
-                    <div className="stat-label">Bài nổi bật</div>
-                </div>
 
-                <div className="stat-card">
-                    <div className="stat-icon">🏷️</div>
-                    <div className="stat-number">{categories}</div>
-                    <div className="stat-label">Danh mục</div>
-                </div>
+
+
             </div>
 
             {/* Quick Actions */}
@@ -82,7 +74,7 @@ const AdminDashboard = ({ articles }) => {
                                         <div className="article-meta">
                                             📅 {new Date(article.date).toLocaleDateString('vi-VN')} •
                                             👁️ {article.views} •
-                                            📂 {article.category}
+
                                         </div>
                                     </div>
                                     <Link to={`/article/${article.id}`} className="view-btn">

@@ -159,10 +159,7 @@ const HomePage = ({ articles }) => {
                                     <span className="homepage-stat-number">{articles.length}</span>
                                     <span className="homepage-stat-label">Lễ hội</span>
                                 </div>
-                                <div className="homepage-hero-stat">
-                                    <span className="homepage-stat-number">{featuredArticles.length}</span>
-                                    <span className="homepage-stat-label">Nổi bật</span>
-                                </div>
+
                             </div>
                         </div>
                     </section>
@@ -180,7 +177,7 @@ const HomePage = ({ articles }) => {
                     {trendingArticles.length > 0 && (
                         <section className="homepage-trending-section">
                             <div className="homepage-section-header">
-                                <h2 className="homepage-section-title">🔥 Lễ hội trending</h2>
+                                <h2 className="homepage-section-title">🔥 Lễ hội nổi bật</h2>
                                 <p className="homepage-section-subtitle">Những lễ hội được quan tâm và tìm hiểu nhiều nhất</p>
                             </div>
 
