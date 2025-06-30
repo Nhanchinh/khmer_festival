@@ -3132,4 +3132,36 @@ Reset previous styles */ .header,
   transform: translateY(-1px);
 }
 
-/* ... rest of existing CSS với modal-overlay prefix ...
+/* ... rest of existing CSS với modal-overlay prefix ... */
+
+/* ✅ THÊM: Admin delete button cho comments */
+.article-detail-comment-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.article-detail-delete-btn {
+  background: none;
+  border: none;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: #dc3545;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: var(--transition);
+  opacity: 0.7;
+}
+
+.article-detail-delete-btn:hover {
+  background: rgba(220, 53, 69, 0.1);
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.article-detail-comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}

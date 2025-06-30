@@ -302,7 +302,7 @@ const ArticleDetail = ({ articles, incrementViews }) => {
             if (response && response.comments) {
                 const processedComments = response.comments.map(comment => ({
                     id: comment.id,
-                    author: comment.author?.username || comment.author || 'Khách',
+                    author: comment.author?.username || comment.author || 'Khách vô danh',
                     content: comment.body,
                     rating: comment.rate || 5,
                     date: comment.createdAt || new Date().toISOString(),
@@ -331,13 +331,14 @@ const ArticleDetail = ({ articles, incrementViews }) => {
         try {
             const response = await commentsAPI.create(article.slug, {
                 body: newComment.content.trim(),
-                rate: newComment.rating
+                rate: newComment.rating,
+                author: newComment.name.trim()
             });
 
             if (response && response.comment) {
                 const processedComment = {
                     id: response.comment.id,
-                    author: newComment.name.trim(),
+                    author: response.comment.author || newComment.name.trim(),
                     content: response.comment.body,
                     rating: response.comment.rate || newComment.rating,
                     date: response.comment.createdAt || new Date().toISOString(),
@@ -370,6 +371,11 @@ const ArticleDetail = ({ articles, incrementViews }) => {
 
     const handlePageChange = (pageNumber) => {
         setCurrentPage(pageNumber);
+    };
+
+    // ✅ THÊM: Check admin authentication
+    const isAdmin = () => {
+        return localStorage.getItem('adminAuth') === 'true';
     };
 
     if (!article && articles && articles.length > 0) {
@@ -583,7 +589,9 @@ const ArticleDetail = ({ articles, incrementViews }) => {
                                         <div key={comment.id} className="article-detail-comment">
                                             <div className="article-detail-comment-header">
                                                 <div>
-                                                    <div className="article-detail-comment-author">{comment.author}</div>
+                                                    <div className="article-detail-comment-author">
+                                                        {comment.author || comment.name || 'Khách vô danh'}
+                                                    </div>
                                                     <div className="article-detail-comment-rating">
                                                         {[1, 2, 3, 4, 5].map(star => (
                                                             <span
@@ -595,9 +603,23 @@ const ArticleDetail = ({ articles, incrementViews }) => {
                                                         ))}
                                                     </div>
                                                 </div>
-                                                <span className="article-detail-comment-date">
-                                                    {formatCommentDate(comment.date)}
-                                                </span>
+
+                                                <div className="article-detail-comment-meta">
+                                                    <span className="article-detail-comment-date">
+                                                        {formatCommentDate(comment.date)}
+                                                    </span>
+
+                                                    {/* ✅ THÊM: Delete button cho admin */}
+                                                    {isAdmin() && (
+                                                        <button
+                                                            onClick={() => handleDeleteComment(comment.id)}
+                                                            className="article-detail-delete-btn"
+                                                            title="Xóa bình luận"
+                                                        >
+                                                            🗑️
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
                                             <div className="article-detail-comment-content">
                                                 {comment.content}

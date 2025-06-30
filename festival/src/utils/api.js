@@ -289,7 +289,7 @@ export const commentsAPI = {
         return response;
     },
 
-    // Create comment with rating - POST /articles/{slug}/comments
+    // Create comment with rating and author - POST /articles/{slug}/comments
     create: async (slug, commentData) => {
         console.log('💬 Creating comment for article:', slug, commentData);
 
@@ -298,7 +298,8 @@ export const commentsAPI = {
             body: JSON.stringify({
                 comment: {
                     body: commentData.body || commentData.content,
-                    rate: commentData.rating || commentData.rate || 5 // Gửi rating lên backend
+                    rate: commentData.rating || commentData.rate || 5,
+                    author: commentData.author // ✅ GỬI AUTHOR LÊN BACKEND
                 }
             }),
         });
