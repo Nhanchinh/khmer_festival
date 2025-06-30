@@ -248,7 +248,7 @@ const EventsCalendar = ({ articles }) => {
                                     </div>
                                     <div className="calendar-suggestion-countdown">
                                         <span className="calendar-countdown-days">
-                                            {event.daysUntil >= 0 ? event.daysUntil : `+${Math.abs(event.daysUntil)}`}
+                                            {event.daysUntil >= 0 ? event.daysUntil : `${Math.abs(event.daysUntil)}`}
                                         </span>
                                         <span className="calendar-countdown-label">
                                             {event.daysUntil >= 0 ? 'ngày nữa' : 'ngày trước'}
