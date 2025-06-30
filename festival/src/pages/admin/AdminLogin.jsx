@@ -118,12 +118,7 @@ const AdminLogin = ({ setIsAdminAuthenticated, isAuthenticated }) => {
 
                     {/* Demo Info */}
                     <div className="demo-info">
-                        <h4>🔑 Thông tin demo</h4>
-                        <div className="demo-credentials">
-                            <p><strong>Email:</strong> <code>admin@festival.com</code></p>
-                            <p><strong>Password:</strong> <code>123456</code></p>
-                        </div>
-                        <small>Sử dụng thông tin này để đăng nhập vào hệ thống</small>
+
                     </div>
 
                     {/* Back Link */}
