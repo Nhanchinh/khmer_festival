@@ -49,7 +49,7 @@ const UserLayout = ({ searchTerm, setSearchTerm }) => {
             <footer className="user-layout-footer">
                 <div className="user-layout-footer-container">
                     <p className="user-layout-footer-text">
-                        ©copyright Dương Nhật Linh MSSV 170123016 Lớp DT23TTK9 Trường đại học trà vinh
+                        ©copyright Dương Nhật Linh MSSV 170123016 Lớp DT23TTK9 Trường đại học Trà Vinh
                     </p>
                 </div>
             </footer>

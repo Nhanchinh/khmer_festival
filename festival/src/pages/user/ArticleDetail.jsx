@@ -141,6 +141,47 @@ const formatCommentDate = (dateString) => {
     return date.toLocaleDateString('vi-VN');
 };
 
+// ✅ THÊM: Helper function để parse ngày từ description
+const parseEventDates = (description) => {
+    if (!description) return { hasDate: false };
+
+    const datePattern = /Ngày:\s*(\d{1,2}\/\d{1,2}\/\d{4})\s*-\s*(\d{1,2}\/\d{1,2}\/\d{4})/;
+    const singleDatePattern = /Ngày:\s*(\d{1,2}\/\d{1,2}\/\d{4})/;
+
+    const dateMatch = description.match(datePattern);
+    if (dateMatch) {
+        return {
+            startDate: dateMatch[1],
+            endDate: dateMatch[2],
+            hasDate: true,
+            isRange: true
+        };
+    }
+
+    const singleMatch = description.match(singleDatePattern);
+    if (singleMatch) {
+        return {
+            startDate: singleMatch[1],
+            endDate: singleMatch[1],
+            hasDate: true,
+            isRange: false
+        };
+    }
+
+    return { hasDate: false };
+};
+
+// ✅ THÊM: Helper function để format date range
+const formatDateRange = (startDate, endDate, isRange) => {
+    if (!startDate) return null;
+
+    if (isRange && startDate !== endDate) {
+        return `${startDate} - ${endDate}`;
+    } else {
+        return startDate;
+    }
+};
+
 const ArticleDetail = ({ articles, incrementViews }) => {
     const { id } = useParams();
     const [article, setArticle] = useState(null);
@@ -157,6 +198,11 @@ const ArticleDetail = ({ articles, incrementViews }) => {
     const [isSubmittingComment, setIsSubmittingComment] = useState(false);
     const viewCountedRef = useRef(new Set());
     const currentViewsRef = useRef(null);
+
+    // ✅ THÊM: Scroll to top khi vào trang chi tiết
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [id]); // Chạy khi id thay đổi
 
     const handleIncrementView = useCallback(async (articleSlug, articleId) => {
         const trackingKey = articleSlug || articleId;
@@ -359,6 +405,9 @@ const ArticleDetail = ({ articles, incrementViews }) => {
         );
     }
 
+    // ✅ THÊM: Parse ngày bắt đầu và kết thúc từ description
+    const eventDates = parseEventDates(article.excerpt || article.description || '');
+
     const averageRating = comments.length > 0
         ? comments.reduce((sum, comment) => sum + (Number(comment.rating) || 5), 0) / comments.length
         : 0;
@@ -382,27 +431,49 @@ const ArticleDetail = ({ articles, incrementViews }) => {
                         <h1 className="article-detail-title">{article.title}</h1>
 
                         <div className="article-detail-meta">
-                            <div className="article-detail-meta-item">
-                                <span className="meta-icon">📅</span>
-                                <span>{new Date(article.date).toLocaleDateString('vi-VN')}</span>
+                            {/* ✅ Dòng 1: Ngày đăng, Lượt xem, Tags */}
+                            <div className="article-detail-meta-row-1">
+                                <div className="article-detail-meta-basic">
+                                    <div className="article-detail-meta-item">
+                                        <span className="meta-icon">📅</span>
+                                        <span>Đăng: {new Date(article.date).toLocaleDateString('vi-VN')}</span>
+                                    </div>
+
+                                    <div className="article-detail-meta-item">
+                                        <span className="meta-icon">👁️</span>
+                                        <span>{(article.views || 0).toLocaleString('vi-VN')} lượt xem</span>
+                                    </div>
+                                </div>
+
+                                {/* Tags bên phải */}
+                                {article.tags && article.tags.length > 0 && (
+                                    <div className="article-detail-tags">
+                                        {article.tags.map(tag => (
+                                            <span key={tag} className="article-detail-tag">
+                                                #{tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
-                            <div className="article-detail-meta-item">
-                                <span className="meta-icon">👁️</span>
-                                <span>{(article.views || 0).toLocaleString('vi-VN')} lượt xem</span>
-                            </div>
-                            <div className="article-detail-meta-item">
-                                <span className="meta-icon">🗺️</span>
-                                <span>{article.location}</span>
+
+                            {/* ✅ Dòng 2: Địa điểm và Thời gian diễn ra */}
+                            <div className="article-detail-meta-row-2">
+                                <div className="article-detail-meta-item">
+                                    <span className="meta-icon">🗺️</span>
+                                    <span>{article.location}</span>
+                                </div>
+
+                                {eventDates.hasDate && (
+                                    <div className="article-detail-meta-item event-dates">
+                                        <span className="meta-icon">🗓️</span>
+                                        <span>
+                                            Diễn ra: {formatDateRange(eventDates.startDate, eventDates.endDate, eventDates.isRange)}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                         </div>
-
-                        {article.tags && article.tags.length > 0 && (
-                            <div className="article-detail-tags">
-                                {article.tags.map(tag => (
-                                    <span key={tag} className="article-detail-tag">#{tag}</span>
-                                ))}
-                            </div>
-                        )}
                     </header>
 
                     <ImageGallery images={article.image} title={article.title} />
