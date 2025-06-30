@@ -1,27 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { authAPI } from '../../utils/api';
+import { authAPI, imageAPI } from '../../utils/api';
 
-// ✅ SỬA LẠI: Multi Image Upload Component - Ảnh nhỏ hơn
+// ✅ SỬA: MultiImageUpload để handle filenames
 const MultiImageUpload = ({ images, onImagesChange, disabled }) => {
     const [isUploading, setIsUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState({});
 
     const uploadImage = async (file) => {
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const response = await fetch('http://localhost:5000/api/images/upload', {
-            method: 'POST',
-            body: formData
-        });
-
-        if (!response.ok) {
-            throw new Error('Upload failed');
-        }
-
-        const result = await response.json();
-        return `http://localhost:5000/api/images/${result.fileName}`;
+        // ✅ Return filename thay vì full URL
+        return await imageAPI.upload(file);
     };
 
     const handleFileSelect = async (e) => {
@@ -29,27 +17,28 @@ const MultiImageUpload = ({ images, onImagesChange, disabled }) => {
         if (files.length === 0) return;
 
         setIsUploading(true);
-        const newImageUrls = [];
+        const newImageFilenames = []; // ✅ Array of filenames
 
         try {
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
                 setUploadProgress(prev => ({ ...prev, [file.name]: 0 }));
 
-                const imageUrl = await uploadImage(file);
-                newImageUrls.push(imageUrl);
+                const filename = await uploadImage(file); // ✅ Nhận filename
+                newImageFilenames.push(filename);
 
                 setUploadProgress(prev => ({ ...prev, [file.name]: 100 }));
             }
 
-            onImagesChange([...images, ...newImageUrls]);
+            // ✅ Combine filenames (không phải URLs)
+            onImagesChange([...images, ...newImageFilenames]);
         } catch (error) {
             console.error('Upload error:', error);
             alert('Có lỗi khi upload ảnh: ' + error.message);
         } finally {
             setIsUploading(false);
             setUploadProgress({});
-            e.target.value = ''; // Reset input
+            e.target.value = '';
         }
     };
 
@@ -111,14 +100,20 @@ const MultiImageUpload = ({ images, onImagesChange, disabled }) => {
                 </div>
             )}
 
-            {/* ✅ COMPACT Image Preview Grid */}
+            {/* ✅ SỬA: Image Preview với filename → URL conversion */}
             {images.length > 0 && (
                 <div className="compact-image-grid">
-                    {images.map((imageUrl, index) => (
+                    {images.map((imageFilename, index) => (
                         <div key={index} className="compact-image-item">
-                            <img src={imageUrl} alt={`Preview ${index + 1}`} />
+                            {/* ✅ Convert filename to URL for display */}
+                            <img
+                                src={imageAPI.getImageUrl(imageFilename)}
+                                alt={`Preview ${index + 1}`}
+                                onError={(e) => {
+                                    e.target.src = '/placeholder.jpg';
+                                }}
+                            />
 
-                            {/* ✅ X Button để xóa */}
                             <button
                                 type="button"
                                 className="compact-remove-btn"
@@ -129,7 +124,6 @@ const MultiImageUpload = ({ images, onImagesChange, disabled }) => {
                                 ✕
                             </button>
 
-                            {/* Badge ảnh chính */}
                             {index === 0 && (
                                 <div className="compact-main-badge">Chính</div>
                             )}

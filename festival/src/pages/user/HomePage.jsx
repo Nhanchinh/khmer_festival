@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import './HomePage.css';
 import EventsCalendar from '../../components/EventsCalendar';
+import { imageAPI } from '../../utils/api';
 
 const HomePage = ({ articles }) => {
     const [sortBy, setSortBy] = useState('date');
@@ -117,10 +118,10 @@ const HomePage = ({ articles }) => {
 
     const getFirstImage = (imageData) => {
         if (Array.isArray(imageData) && imageData.length > 0) {
-            return imageData[0];
+            return imageAPI.getImageUrl(imageData[0]);
         }
         if (typeof imageData === 'string' && imageData) {
-            return imageData;
+            return imageAPI.getImageUrl(imageData);
         }
         return '/placeholder.jpg';
     };

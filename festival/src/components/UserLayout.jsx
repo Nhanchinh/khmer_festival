@@ -49,7 +49,7 @@ const UserLayout = ({ searchTerm, setSearchTerm }) => {
             <footer className="user-layout-footer">
                 <div className="user-layout-footer-container">
                     <p className="user-layout-footer-text">
-                        © 2025 Lễ hội Khmer Nam Bộ. Bảo tồn và phát huy văn hóa truyền thống.
+                        ©copyright Dương Nhật Linh MSSV 170123016 Lớp DT23TTK9 Trường đại học trà vinh
                     </p>
                 </div>
             </footer>

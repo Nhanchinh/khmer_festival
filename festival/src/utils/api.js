@@ -1,6 +1,7 @@
 // API base configuration
-const API_BASE_URL = 'http://localhost:5000';
+// const API_BASE_URL = 'http://localhost:5000';
 
+const API_BASE_URL = 'https://henry-mapping-liquid-spend.trycloudflare.com';
 // API helper function
 const apiCall = async (endpoint, options = {}) => {
     const url = `${API_BASE_URL}${endpoint}`;
@@ -318,7 +319,7 @@ export const commentsAPI = {
 
 // Helper function to convert API article to frontend format
 export const convertApiArticleToFrontend = (apiArticle) => {
-    console.log('🔍 Debug: Converting API article:', apiArticle);
+    console.log('🔍 Converting API article:', apiArticle);
 
     return {
         id: apiArticle.slug || apiArticle.id,
@@ -326,9 +327,12 @@ export const convertApiArticleToFrontend = (apiArticle) => {
         title: apiArticle.title || 'Không có tiêu đề',
         excerpt: apiArticle.description || 'Không có mô tả',
         content: apiArticle.body || '',
+
+        // ✅ SỬA: Convert images thông qua imageAPI.getImageUrls
         image: apiArticle.image && apiArticle.image.length > 0
-            ? (Array.isArray(apiArticle.image) ? apiArticle.image : [apiArticle.image])
+            ? imageAPI.getImageUrls(Array.isArray(apiArticle.image) ? apiArticle.image : [apiArticle.image])
             : ['/placeholder.jpg'],
+
         videoUrl: apiArticle.videoUrl,
         location: apiArticle.mapLocation || 'Chưa xác định',
         date: apiArticle.createdAt || new Date().toISOString(),
@@ -336,12 +340,14 @@ export const convertApiArticleToFrontend = (apiArticle) => {
         featured: apiArticle.favorited || false,
         views: apiArticle.views || 0,
         favoritesCount: apiArticle.favoritesCount || 0,
+
         author: apiArticle.author ? {
             username: apiArticle.author.username,
             email: apiArticle.author.email,
             bio: apiArticle.author.bio,
             image: apiArticle.author.image
         } : null,
+
         comments: apiArticle.comments ? apiArticle.comments.map(comment => ({
             id: comment.id || comment.commentId,
             name: comment.author || 'Anonymous',
@@ -374,3 +380,55 @@ export const generateSlug = (title) => {
         .replace(/\s+/g, '-') // Replace spaces with hyphens
         .replace(/-+/g, '-'); // Replace multiple hyphens with single
 };
+
+// ✅ SỬA: Image upload API - chỉ return filename
+export const imageAPI = {
+    upload: async (file) => {
+        console.log('🔍 Uploading image:', file.name);
+
+        const formData = new FormData();
+        formData.append('file', file);
+        const token = localStorage.getItem('authToken');
+
+        const response = await fetch(`${API_BASE_URL}/api/images/upload`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Upload failed');
+        }
+
+        const result = await response.json();
+
+        // ✅ THAY ĐỔI: Chỉ return filename thay vì full URL
+        console.log('✅ Image uploaded, filename:', result.fileName);
+        return result.fileName; // ✅ CHỈ RETURN FILENAME
+    },
+
+    // ✅ THÊM: Helper để convert filename thành full URL
+    getImageUrl: (fileName) => {
+        if (!fileName) return '/placeholder.jpg';
+
+        // ✅ Nếu đã là full URL (data cũ) → giữ nguyên
+        if (fileName.startsWith('http://') || fileName.startsWith('https://')) {
+            return fileName;
+        }
+
+        // ✅ Nếu là filename → ghép với base URL hiện tại
+        return `${API_BASE_URL}/api/images/${fileName}`;
+    },
+
+    // ✅ THÊM: Batch convert nhiều filenames
+    getImageUrls: (fileNames) => {
+        if (!Array.isArray(fileNames)) return ['/placeholder.jpg'];
+        return fileNames.map(fileName => imageAPI.getImageUrl(fileName));
+    }
+};
+
+// ✅ EXPORT base URL để other components sử dụng
+export { API_BASE_URL };
