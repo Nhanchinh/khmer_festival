@@ -15,7 +15,7 @@ Trước khi bắt đầu, hãy đảm bảo máy tính của bạn đã cài đ
 ### 1. Clone dự án
 
 ```bash
-git clone https://github.com/Nhanchinh/project_Ngan
+git clone https://github.com/Nhanchinh/khmer_festival.git
 cd festival
 ```
 
