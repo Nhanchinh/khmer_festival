@@ -12,10 +12,9 @@ Trước khi bắt đầu, hãy đảm bảo máy tính của bạn đã cài đ
 
 ## 🚀 Cài đặt và chạy dự án
 
-### 1. Clone dự án
+### 1. Di chuyển đến thư mục đích
 
 ```bash
-git clone https://github.com/Nhanchinh/khmer_festival.git
 cd festival
 ```
 
@@ -53,4 +52,3 @@ yarn dev
 | `npm run preview` | Xem trước bản build |
 | `npm run lint` | Kiểm tra lỗi code với ESLint |
 
-## 🏗️ Cấu trúc dự án
